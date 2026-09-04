@@ -1,0 +1,13 @@
+package com.logistica.cotizacionenvio;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+@SpringBootApplication
+public class CotizacionEnvioApplication {
+
+    public static void main(String[] args) {
+        SpringApplication.run(CotizacionEnvioApplication.class, args);
+    }
+
+}

@@ -1,0 +1,119 @@
+package com.logistica.cotizacionenvio.web;
+
+import com.logistica.cotizacionenvio.domain.ProviderQuote;
+import com.logistica.cotizacionenvio.domain.QuoteStatus;
+import com.logistica.cotizacionenvio.domain.ShippingQuoteResult;
+import com.logistica.cotizacionenvio.service.ShippingQuoteService;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.http.MediaType;
+import org.springframework.test.web.reactive.server.WebTestClient;
+import reactor.core.publisher.Mono;
+
+import java.math.BigDecimal;
+import java.time.Instant;
+import java.util.List;
+
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.when;
+
+/**
+ * Slice de la capa web unicamente: ShippingQuoteService se simula con
+ * @MockBean para no depender de los proveedores reales (aleatorios) ni
+ * repetir aqui las pruebas de orquestacion/idempotencia, ya cubiertas en
+ * ShippingQuoteOrchestratorTest y ShippingQuoteServiceTest.
+ */
+@WebFluxTest(ShippingQuoteController.class)
+class ShippingQuoteControllerTest {
+
+    @Autowired
+    private WebTestClient webTestClient;
+
+    @MockBean
+    private ShippingQuoteService service;
+
+    @Test
+    void creaUnaCotizacionExitosaYRespondeConLaAlternativaSeleccionada() {
+        var quote = new ProviderQuote("PROVIDER_A", "A-1", BigDecimal.valueOf(15000), 2);
+        var result = new ShippingQuoteResult("REQ-1001", QuoteStatus.COMPLETED, quote, List.of(), Instant.now());
+        when(service.quote(any())).thenReturn(Mono.just(result));
+
+        webTestClient.post()
+                .uri("/api/v1/shipping-quotes")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue("""
+                        {"requestId":"REQ-1001","origin":"BOG","destination":"MDE","weightKg":12.5}
+                        """)
+                .exchange()
+                .expectStatus().isCreated()
+                .expectHeader().valueEquals("Location", "/api/v1/shipping-quotes/REQ-1001")
+                .expectBody()
+                .jsonPath("$.requestId").isEqualTo("REQ-1001")
+                .jsonPath("$.status").isEqualTo("COMPLETED")
+                .jsonPath("$.selected.provider").isEqualTo("PROVIDER_A")
+                .jsonPath("$.message").doesNotExist();
+    }
+
+    @Test
+    void respondeConMensajeControladoCuandoNingunProveedorDioCotizacionValida() {
+        var result = new ShippingQuoteResult("REQ-1002", QuoteStatus.FAILED, null, List.of(), Instant.now());
+        when(service.quote(any())).thenReturn(Mono.just(result));
+
+        webTestClient.post()
+                .uri("/api/v1/shipping-quotes")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue("""
+                        {"requestId":"REQ-1002","origin":"BOG","destination":"MDE","weightKg":12.5}
+                        """)
+                .exchange()
+                .expectStatus().isCreated()
+                .expectBody()
+                .jsonPath("$.status").isEqualTo("FAILED")
+                .jsonPath("$.selected").doesNotExist()
+                .jsonPath("$.message").isNotEmpty();
+    }
+
+    @Test
+    void rechazaUnaSolicitudInvalidaConCuerpoDeErrorLimpio() {
+        webTestClient.post()
+                .uri("/api/v1/shipping-quotes")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue("""
+                        {"requestId":"REQ-1003","origin":"BOG","destination":"BOG","weightKg":-1}
+                        """)
+                .exchange()
+                .expectStatus().isBadRequest()
+                .expectBody()
+                .jsonPath("$.message").isNotEmpty();
+    }
+
+    @Test
+    void devuelveLaCotizacionExistenteAlConsultarPorRequestId() {
+        var quote = new ProviderQuote("PROVIDER_B", "B-1", BigDecimal.valueOf(17000), 3);
+        var result = new ShippingQuoteResult("REQ-2001", QuoteStatus.COMPLETED, quote, List.of(), Instant.now());
+        when(service.find(eq("REQ-2001"))).thenReturn(Mono.just(result));
+
+        webTestClient.get()
+                .uri("/api/v1/shipping-quotes/REQ-2001")
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody()
+                .jsonPath("$.requestId").isEqualTo("REQ-2001")
+                .jsonPath("$.selected.price").isEqualTo(17000);
+    }
+
+    @Test
+    void devuelve404CuandoElRequestIdNoExiste() {
+        when(service.find(eq("NO-EXISTE"))).thenReturn(Mono.empty());
+
+        webTestClient.get()
+                .uri("/api/v1/shipping-quotes/NO-EXISTE")
+                .exchange()
+                .expectStatus().isNotFound()
+                .expectBody()
+                .jsonPath("$.message").isNotEmpty();
+    }
+}

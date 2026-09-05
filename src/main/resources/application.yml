@@ -15,9 +15,14 @@ logging:
   level:
     com.logistica.cotizacionenvio: DEBUG
 
-# Proveedores simulados (Paso 3): sin dependencias externas reales.
+# Proveedores simulados: sin dependencias externas reales.
 # Latencia variable (min-max) y probabilidad de fallo, configurables aqui
 # para reproducir localmente distintos escenarios (proveedor lento, flaky, etc).
+orchestration:
+  # Tiempo maximo que se espera a cada proveedor antes de descartarlo y
+  # continuar con el/los que si respondieron.
+  provider-timeout-ms: 1500
+
 providers:
   provider-a:
     min-latency-ms: 200

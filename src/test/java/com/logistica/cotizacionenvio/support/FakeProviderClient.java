@@ -6,6 +6,7 @@ import com.logistica.cotizacionenvio.provider.ProviderClient;
 import reactor.core.publisher.Mono;
 
 import java.time.Duration;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 
 /**
@@ -33,6 +34,14 @@ public class FakeProviderClient implements ProviderClient {
 
     public static FakeProviderClient delayedBy(String providerName, Duration delay, ProviderQuote quote) {
         return new FakeProviderClient(providerName, request -> Mono.just(quote).delayElement(delay));
+    }
+
+    /** Cuenta cuantas veces se invoca requestQuote - util para verificar que no se duplica trabajo. */
+    public static FakeProviderClient counting(String providerName, ProviderQuote quote, AtomicInteger invocationCount) {
+        return new FakeProviderClient(providerName, request -> {
+            invocationCount.incrementAndGet();
+            return Mono.just(quote);
+        });
     }
 
     @Override

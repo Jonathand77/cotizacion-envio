@@ -14,3 +14,22 @@ management:
 logging:
   level:
     com.logistica.cotizacionenvio: DEBUG
+
+# Proveedores simulados (Paso 3): sin dependencias externas reales.
+# Latencia variable (min-max) y probabilidad de fallo, configurables aqui
+# para reproducir localmente distintos escenarios (proveedor lento, flaky, etc).
+providers:
+  provider-a:
+    min-latency-ms: 200
+    max-latency-ms: 800
+    failure-rate: 0.1
+    base-price: 15000
+    price-per-kg: 300
+    estimated-days: 2
+  provider-b:
+    min-latency-ms: 300
+    max-latency-ms: 1200
+    failure-rate: 0.2
+    base-price: 14000
+    price-per-kg: 320
+    estimated-days: 3

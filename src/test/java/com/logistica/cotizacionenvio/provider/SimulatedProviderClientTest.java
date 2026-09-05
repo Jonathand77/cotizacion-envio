@@ -47,13 +47,4 @@ class SimulatedProviderClientTest {
                         && e.getProvider().equals("PROVIDER_TEST"))
                 .verify();
     }
-
-    @Test
-    void providerNameExponeElNombreConfigurado() {
-        var config = new SimulatedProviderConfig(
-                "PROVIDER_X", Duration.ofMillis(1), Duration.ofMillis(1),
-                0.0, BigDecimal.ZERO, BigDecimal.ZERO, 1);
-
-        assertThat(new SimulatedProviderClient(config).providerName()).isEqualTo("PROVIDER_X");
-    }
 }

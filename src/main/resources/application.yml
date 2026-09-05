@@ -1,5 +1,14 @@
 server:
   port: 8080
+  error:
+    # Defensa adicional: aunque ShippingQuoteExceptionHandler ya cubre
+    # todas las excepciones de nuestros endpoints con un ApiError propio,
+    # esto asegura que ni siquiera el manejador de error por defecto de
+    # Spring exponga mensajes o stack traces si algo ocurre fuera de ese
+    # alcance (por ejemplo, antes de llegar al controller).
+    include-message: never
+    include-stacktrace: never
+    include-binding-errors: never
 
 spring:
   application:

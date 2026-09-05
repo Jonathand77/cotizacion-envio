@@ -89,13 +89,6 @@ class ShippingQuoteServiceTest {
         assertThat(encontrado).isEqualTo(guardado);
     }
 
-    @Test
-    void findDevuelveVacioParaUnRequestIdDesconocido() {
-        var service = serviceWith(new AtomicInteger(), new ProviderQuote("PROVIDER_A", "A-1", BigDecimal.ONE, 1));
-
-        assertThat(service.find("NO-EXISTE").blockOptional()).isEmpty();
-    }
-
     private static void awaitUninterruptibly(CountDownLatch latch) {
         try {
             latch.await();

@@ -116,4 +116,43 @@ class ShippingQuoteControllerTest {
                 .expectBody()
                 .jsonPath("$.message").isNotEmpty();
     }
+
+    @Test
+    void rechazaUnContentTypeNoSoportadoPreservandoEl415() {
+        webTestClient.post()
+                .uri("/api/v1/shipping-quotes")
+                .contentType(MediaType.TEXT_PLAIN)
+                .bodyValue("{\"requestId\":\"REQ-X\",\"origin\":\"BOG\",\"destination\":\"MDE\",\"weightKg\":1}")
+                .exchange()
+                .expectStatus().value(status -> org.assertj.core.api.Assertions.assertThat(status).isEqualTo(415))
+                .expectBody()
+                .jsonPath("$.message").value(
+                        (String message) -> org.assertj.core.api.Assertions.assertThat(message)
+                                .isNotEmpty()
+                                .doesNotContain("com.logistica.cotizacionenvio"),
+                        String.class);
+    }
+
+    @Test
+    void unaExcepcionInesperadaResponde500SinFiltrarElDetalleInterno() {
+        when(service.quote(any())).thenReturn(
+                Mono.error(new IllegalStateException("conexion a base de datos secreta://user:pass@host caida")));
+
+        webTestClient.post()
+                .uri("/api/v1/shipping-quotes")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue("""
+                        {"requestId":"REQ-1004","origin":"BOG","destination":"MDE","weightKg":12.5}
+                        """)
+                .exchange()
+                .expectStatus().is5xxServerError()
+                .expectBody()
+                .jsonPath("$.message").value(
+                        (String message) -> {
+                            org.assertj.core.api.Assertions.assertThat(message)
+                                    .doesNotContain("secreta")
+                                    .doesNotContain("IllegalStateException");
+                        },
+                        String.class);
+    }
 }

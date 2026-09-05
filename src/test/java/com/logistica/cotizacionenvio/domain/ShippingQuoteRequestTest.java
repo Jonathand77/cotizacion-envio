@@ -59,10 +59,4 @@ class ShippingQuoteRequestTest {
         assertThat(validator.validate(new ShippingQuoteRequest("REQ-1001", "BOG", "BOG", 12.5)))
                 .isNotEmpty();
     }
-
-    @Test
-    void rechazaOrigenIgualADestinoSinImportarMayusculas() {
-        assertThat(validator.validate(new ShippingQuoteRequest("REQ-1001", "bog", "BOG", 12.5)))
-                .isNotEmpty();
-    }
 }

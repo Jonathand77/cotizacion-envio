@@ -1,5 +1,6 @@
 package com.logistica.cotizacionenvio.web;
 
+import com.logistica.cotizacionenvio.domain.ShippingQuoteRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -22,7 +23,7 @@ import java.util.stream.Collectors;
  * por JSON mal formado, 415 por Content-Type no soportado) en vez de
  * degradarlo a un 500 generico. Se usa la frase estandar del codigo HTTP
  * como mensaje en vez de ex.getReason(), que en algunos casos (ej. 415)
- * incluye el nombre completo de nuestra clase interna de dominio.
+ * incluye el nombre completo de la clase interna de dominio.
  */
 @RestControllerAdvice
 public class ShippingQuoteExceptionHandler {
@@ -34,7 +35,14 @@ public class ShippingQuoteExceptionHandler {
         String message = ex.getFieldErrors().stream()
                 .map(error -> error.getField() + ": " + error.getDefaultMessage())
                 .collect(Collectors.joining("; "));
+        log.info("[{}] solicitud rechazada por validacion: {}", requestIdFrom(ex), message);
         return ResponseEntity.badRequest().body(new ApiError(message));
+    }
+
+    private String requestIdFrom(WebExchangeBindException ex) {
+        return ex.getBindingResult().getTarget() instanceof ShippingQuoteRequest request
+                ? request.requestId()
+                : "desconocido";
     }
 
     @ExceptionHandler(ResponseStatusException.class)

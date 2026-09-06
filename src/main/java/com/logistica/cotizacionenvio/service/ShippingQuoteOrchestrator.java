@@ -6,6 +6,8 @@ import com.logistica.cotizacionenvio.domain.QuoteStatus;
 import com.logistica.cotizacionenvio.domain.ShippingQuoteRequest;
 import com.logistica.cotizacionenvio.domain.ShippingQuoteResult;
 import com.logistica.cotizacionenvio.provider.ProviderClient;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
@@ -31,6 +33,8 @@ import java.util.concurrent.TimeoutException;
 @Service
 public class ShippingQuoteOrchestrator {
 
+    private static final Logger log = LoggerFactory.getLogger(ShippingQuoteOrchestrator.class);
+
     private static final Comparator<ProviderQuote> BEST_QUOTE_ORDER = Comparator
             .comparing(ProviderQuote::price)
             .thenComparing(ProviderQuote::estimatedDays)
@@ -47,17 +51,31 @@ public class ShippingQuoteOrchestrator {
     }
 
     public Mono<ShippingQuoteResult> orchestrate(ShippingQuoteRequest request) {
+        log.info("[{}] consultando {} proveedor(es) en paralelo: {}",
+                request.requestId(), providerClients.size(), providerNames());
         return Flux.fromIterable(providerClients)
                 .flatMap(client -> outcomeFor(client, request))
                 .collectList()
                 .map(outcomes -> buildResult(request.requestId(), outcomes));
     }
 
+    private String providerNames() {
+        return providerClients.stream().map(ProviderClient::providerName).toList().toString();
+    }
+
     private Mono<ProviderOutcome> outcomeFor(ProviderClient client, ShippingQuoteRequest request) {
         return client.requestQuote(request)
                 .timeout(providerTimeout)
                 .map(ProviderOutcome::success)
-                .onErrorResume(error -> Mono.just(ProviderOutcome.failure(client.providerName(), reasonFor(error))));
+                .doOnNext(outcome -> log.info("[{}] {} respondio con cotizacion valida: quoteId={} price={} estimatedDays={}",
+                        request.requestId(), outcome.provider(), outcome.quote().quoteId(),
+                        outcome.quote().price(), outcome.quote().estimatedDays()))
+                .onErrorResume(error -> {
+                    String reason = reasonFor(error);
+                    log.warn("[{}] {} no entrego una cotizacion valida: {}",
+                            request.requestId(), client.providerName(), reason);
+                    return Mono.just(ProviderOutcome.failure(client.providerName(), reason));
+                });
     }
 
     private String reasonFor(Throwable error) {
@@ -75,6 +93,13 @@ public class ShippingQuoteOrchestrator {
                 .orElse(null);
 
         QuoteStatus status = selected != null ? QuoteStatus.COMPLETED : QuoteStatus.FAILED;
+
+        if (selected != null) {
+            log.info("[{}] cotizacion seleccionada: proveedor={} price={} estimatedDays={}",
+                    requestId, selected.provider(), selected.price(), selected.estimatedDays());
+        } else {
+            log.warn("[{}] ningun proveedor entrego una cotizacion valida, status=FAILED", requestId);
+        }
 
         return new ShippingQuoteResult(requestId, status, selected, outcomes, Instant.now());
     }

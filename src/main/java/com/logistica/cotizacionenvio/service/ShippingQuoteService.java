@@ -3,6 +3,8 @@ package com.logistica.cotizacionenvio.service;
 import com.logistica.cotizacionenvio.domain.ShippingQuoteRequest;
 import com.logistica.cotizacionenvio.domain.ShippingQuoteResult;
 import com.logistica.cotizacionenvio.repository.ShippingQuoteRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
@@ -32,6 +34,8 @@ import java.util.concurrent.ConcurrentHashMap;
 @Service
 public class ShippingQuoteService {
 
+    private static final Logger log = LoggerFactory.getLogger(ShippingQuoteService.class);
+
     private final ShippingQuoteOrchestrator orchestrator;
     private final ShippingQuoteRepository repository;
     private final Map<String, Mono<ShippingQuoteResult>> quotesByRequestId = new ConcurrentHashMap<>();
@@ -42,6 +46,16 @@ public class ShippingQuoteService {
     }
 
     public Mono<ShippingQuoteResult> quote(ShippingQuoteRequest request) {
+        // Solo informativo: bajo carrera dos llamadas concurrentes pueden ver
+        // ambas "false" aqui, lo cual es inofensivo para el log. La garantia
+        // real de "una sola orquestacion" la da computeIfAbsent, no este check.
+        if (quotesByRequestId.containsKey(request.requestId())) {
+            log.info("[{}] solicitud repetida: se reutiliza el resultado ya calculado/en curso, sin reconsultar proveedores",
+                    request.requestId());
+        } else {
+            log.info("[{}] solicitud nueva: iniciando orquestacion", request.requestId());
+        }
+
         return quotesByRequestId.computeIfAbsent(request.requestId(), id -> orchestrator.orchestrate(request)
                 .flatMap(repository::saveIfAbsent)
                 .cache());

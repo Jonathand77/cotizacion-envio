@@ -22,7 +22,7 @@ management:
 
 logging:
   level:
-    com.logistica.cotizacionenvio: DEBUG
+    "[com.logistica.cotizacionenvio]": DEBUG
 
 # Proveedores simulados: sin dependencias externas reales.
 # Latencia variable (min-max) y probabilidad de fallo, configurables aqui

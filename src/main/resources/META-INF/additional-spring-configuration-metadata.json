@@ -1,0 +1,70 @@
+{
+  "properties": [
+    {
+      "name": "orchestration.provider-timeout-ms",
+      "type": "java.lang.Long",
+      "description": "Tiempo maximo (ms) que se espera a cada proveedor antes de descartarlo y continuar con el/los que si respondieron.",
+      "defaultValue": 1500
+    },
+    {
+      "name": "providers.provider-a.min-latency-ms",
+      "type": "java.lang.Long",
+      "description": "Latencia minima simulada (ms) del PROVIDER_A."
+    },
+    {
+      "name": "providers.provider-a.max-latency-ms",
+      "type": "java.lang.Long",
+      "description": "Latencia maxima simulada (ms) del PROVIDER_A."
+    },
+    {
+      "name": "providers.provider-a.failure-rate",
+      "type": "java.lang.Double",
+      "description": "Probabilidad (0.0-1.0) de que PROVIDER_A falle en una consulta dada."
+    },
+    {
+      "name": "providers.provider-a.base-price",
+      "type": "java.lang.Long",
+      "description": "Precio base de PROVIDER_A antes de sumar la tarifa por kg."
+    },
+    {
+      "name": "providers.provider-a.price-per-kg",
+      "type": "java.lang.Long",
+      "description": "Tarifa por kg que PROVIDER_A suma al precio base."
+    },
+    {
+      "name": "providers.provider-a.estimated-days",
+      "type": "java.lang.Integer",
+      "description": "Dias estimados de entrega que reporta PROVIDER_A."
+    },
+    {
+      "name": "providers.provider-b.min-latency-ms",
+      "type": "java.lang.Long",
+      "description": "Latencia minima simulada (ms) del PROVIDER_B."
+    },
+    {
+      "name": "providers.provider-b.max-latency-ms",
+      "type": "java.lang.Long",
+      "description": "Latencia maxima simulada (ms) del PROVIDER_B."
+    },
+    {
+      "name": "providers.provider-b.failure-rate",
+      "type": "java.lang.Double",
+      "description": "Probabilidad (0.0-1.0) de que PROVIDER_B falle en una consulta dada."
+    },
+    {
+      "name": "providers.provider-b.base-price",
+      "type": "java.lang.Long",
+      "description": "Precio base de PROVIDER_B antes de sumar la tarifa por kg."
+    },
+    {
+      "name": "providers.provider-b.price-per-kg",
+      "type": "java.lang.Long",
+      "description": "Tarifa por kg que PROVIDER_B suma al precio base."
+    },
+    {
+      "name": "providers.provider-b.estimated-days",
+      "type": "java.lang.Integer",
+      "description": "Dias estimados de entrega que reporta PROVIDER_B."
+    }
+  ]
+}

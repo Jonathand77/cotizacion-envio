@@ -33,6 +33,7 @@ class ShippingQuoteAcceptanceTest {
     @Autowired
     private WebTestClient webTestClient;
 
+    // Flujo principal de punta a punta: POST crea la cotizacion y el GET posterior recupera el mismo resultado
     @Test
     void creaYLuegoConsultaUnaCotizacionCuandoAmbosProveedoresResponden() {
         webTestClient.post()

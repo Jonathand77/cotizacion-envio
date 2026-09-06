@@ -14,6 +14,7 @@ class SimulatedProviderClientTest {
     private static final ShippingQuoteRequest REQUEST =
             new ShippingQuoteRequest("REQ-1001", "BOG", "MDE", 10.0);
 
+    // Sin fallo simulado, devuelve una cotizacion con el precio calculado (base + tarifa*peso)
     @Test
     void devuelveCotizacionCalculadaCuandoNoHayFallo() {
         var config = new SimulatedProviderConfig(
@@ -33,6 +34,7 @@ class SimulatedProviderClientTest {
                 .verifyComplete();
     }
 
+    // Con 100% de tasa de fallo, siempre emite ProviderUnavailableException
     @Test
     void fallaConProviderUnavailableCuandoLaTasaDeFalloEsCienPorCiento() {
         var config = new SimulatedProviderConfig(

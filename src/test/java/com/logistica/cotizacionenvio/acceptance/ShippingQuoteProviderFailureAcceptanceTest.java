@@ -30,6 +30,7 @@ class ShippingQuoteProviderFailureAcceptanceTest {
     @Autowired
     private WebTestClient webTestClient;
 
+    // Escenario de fallo de punta a punta: PROVIDER_A cae, PROVIDER_B responde y su cotizacion se usa igual
     @Test
     void toleraQueUnProveedorFalleYCompletaConElOtroEnElFlujoReal() {
         webTestClient.post()

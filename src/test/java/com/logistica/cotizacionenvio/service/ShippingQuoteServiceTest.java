@@ -21,6 +21,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class ShippingQuoteServiceTest {
 
+    // Idempotencia: repetir el mismo requestId no vuelve a consultar a los proveedores
     @Test
     void unaSegundaSolicitudConElMismoRequestIdNoConsultaProveedoresDeNuevo() {
         var counter = new AtomicInteger();
@@ -35,6 +36,7 @@ class ShippingQuoteServiceTest {
         assertThat(counter.get()).isEqualTo(1);
     }
 
+    // Solicitudes con requestId distinto se orquestan de forma independiente, cada una la suya
     @Test
     void solicitudesConRequestIdDistintoSeProcesanIndependientemente() {
         var counter = new AtomicInteger();
@@ -47,6 +49,7 @@ class ShippingQuoteServiceTest {
         assertThat(counter.get()).isEqualTo(2);
     }
 
+    // 30 hilos concurrentes con el mismo requestId disparan una sola orquestacion real (sin duplicar trabajo)
     @Test
     void solicitudesConcurrentesConElMismoRequestIdSoloDisparanUnaOrquestacion() throws InterruptedException {
         var counter = new AtomicInteger();
@@ -77,6 +80,7 @@ class ShippingQuoteServiceTest {
         assertThat(counter.get()).isEqualTo(1);
     }
 
+    // find() recupera el resultado previamente calculado por quote(), para el futuro GET
     @Test
     void findDevuelveElResultadoGuardadoParaConsultaPosterior() {
         var quote = new ProviderQuote("PROVIDER_A", "A-1", BigDecimal.valueOf(15000), 2);

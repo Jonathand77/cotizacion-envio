@@ -21,11 +21,13 @@ class InMemoryShippingQuoteRepositoryTest {
 
     private final InMemoryShippingQuoteRepository repository = new InMemoryShippingQuoteRepository();
 
+    // Consultar un requestId nunca guardado devuelve un Mono vacio, no un error
     @Test
     void devuelveVacioCuandoNoExisteLaSolicitud() {
         assertThat(repository.findByRequestId("REQ-DESCONOCIDO").blockOptional()).isEmpty();
     }
 
+    // Un resultado guardado se puede recuperar despues por su requestId
     @Test
     void guardaYRecuperaUnResultado() {
         var result = resultFor("REQ-1", "A-1");
@@ -35,6 +37,7 @@ class InMemoryShippingQuoteRepositoryTest {
         assertThat(repository.findByRequestId("REQ-1").block()).isEqualTo(result);
     }
 
+    // saveIfAbsent descarta el segundo valor y devuelve el primero ya guardado (primero en escribir, gana)
     @Test
     void saveIfAbsentNoSobrescribeUnResultadoYaGuardado() {
         var primero = resultFor("REQ-1", "A-1");
@@ -48,6 +51,7 @@ class InMemoryShippingQuoteRepositoryTest {
         assertThat(repository.findByRequestId("REQ-1").block()).isEqualTo(primero);
     }
 
+    // Con 50 hilos escribiendo concurrentemente el mismo requestId, solo un resultado prevalece
     @Test
     void esAtomicoAnteEscriturasConcurrentesConElMismoRequestId() throws InterruptedException {
         int hilos = 50;

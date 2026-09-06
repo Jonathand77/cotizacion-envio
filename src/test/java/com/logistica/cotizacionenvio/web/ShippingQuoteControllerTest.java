@@ -35,6 +35,7 @@ class ShippingQuoteControllerTest {
     @MockBean
     private ShippingQuoteService service;
 
+    // POST exitoso: responde 201 + Location, con la cotizacion seleccionada en el cuerpo
     @Test
     void creaUnaCotizacionExitosaYRespondeConLaAlternativaSeleccionada() {
         var quote = new ProviderQuote("PROVIDER_A", "A-1", BigDecimal.valueOf(15000), 2);
@@ -57,6 +58,7 @@ class ShippingQuoteControllerTest {
                 .jsonPath("$.message").doesNotExist();
     }
 
+    // Cuando el resultado es FAILED, responde 201 igual, con mensaje generico y sin "selected"
     @Test
     void respondeConMensajeControladoCuandoNingunProveedorDioCotizacionValida() {
         var result = new ShippingQuoteResult("REQ-1002", QuoteStatus.FAILED, null, List.of(), Instant.now());
@@ -76,6 +78,7 @@ class ShippingQuoteControllerTest {
                 .jsonPath("$.message").isNotEmpty();
     }
 
+    // Una solicitud invalida responde 400 con un ApiError limpio, no la excepcion de validacion cruda
     @Test
     void rechazaUnaSolicitudInvalidaConCuerpoDeErrorLimpio() {
         webTestClient.post()
@@ -90,6 +93,7 @@ class ShippingQuoteControllerTest {
                 .jsonPath("$.message").isNotEmpty();
     }
 
+    // GET de un requestId conocido responde 200 con el resultado guardado
     @Test
     void devuelveLaCotizacionExistenteAlConsultarPorRequestId() {
         var quote = new ProviderQuote("PROVIDER_B", "B-1", BigDecimal.valueOf(17000), 3);
@@ -105,6 +109,7 @@ class ShippingQuoteControllerTest {
                 .jsonPath("$.selected.price").isEqualTo(17000);
     }
 
+    // GET de un requestId desconocido responde 404 con un mensaje claro
     @Test
     void devuelve404CuandoElRequestIdNoExiste() {
         when(service.find(eq("NO-EXISTE"))).thenReturn(Mono.empty());
@@ -117,6 +122,7 @@ class ShippingQuoteControllerTest {
                 .jsonPath("$.message").isNotEmpty();
     }
 
+    // Content-Type no soportado preserva el 415 real de Spring, sin exponer el paquete interno
     @Test
     void rechazaUnContentTypeNoSoportadoPreservandoEl415() {
         webTestClient.post()
@@ -133,6 +139,7 @@ class ShippingQuoteControllerTest {
                         String.class);
     }
 
+    // Una excepcion no anticipada responde 500 generico, sin exponer su mensaje ni su tipo
     @Test
     void unaExcepcionInesperadaResponde500SinFiltrarElDetalleInterno() {
         when(service.quote(any())).thenReturn(

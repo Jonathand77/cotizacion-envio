@@ -25,6 +25,7 @@ class ShippingQuoteRequestTest {
         factory.close();
     }
 
+    // Una solicitud con todos los campos correctos no genera violaciones de validacion
     @Test
     void aceptaUnaSolicitudValida() {
         var request = new ShippingQuoteRequest("REQ-1001", "BOG", "MDE", 12.5);
@@ -32,6 +33,7 @@ class ShippingQuoteRequestTest {
         assertThat(validator.validate(request)).isEmpty();
     }
 
+    // requestId en blanco es rechazado por @NotBlank
     @Test
     void rechazaRequestIdEnBlanco() {
         var request = new ShippingQuoteRequest(" ", "BOG", "MDE", 12.5);
@@ -39,6 +41,7 @@ class ShippingQuoteRequestTest {
         assertThat(validator.validate(request)).isNotEmpty();
     }
 
+    // origin/destination en blanco son rechazados por @NotBlank
     @Test
     void rechazaOrigenODestinoEnBlanco() {
         var request = new ShippingQuoteRequest("REQ-1001", "", "MDE", 12.5);
@@ -46,6 +49,7 @@ class ShippingQuoteRequestTest {
         assertThat(validator.validate(request)).isNotEmpty();
     }
 
+    // weightKg nulo o menor/igual a cero es rechazado por @NotNull/@Positive
     @Test
     void rechazaPesoNuloOMenorOIgualACero() {
         assertThat(validator.validate(new ShippingQuoteRequest("REQ-1001", "BOG", "MDE", 0.0)))
@@ -54,6 +58,7 @@ class ShippingQuoteRequestTest {
                 .isNotEmpty();
     }
 
+    // origin igual a destination es rechazado por la validacion cruzada @AssertTrue
     @Test
     void rechazaOrigenIgualADestino() {
         assertThat(validator.validate(new ShippingQuoteRequest("REQ-1001", "BOG", "BOG", 12.5)))

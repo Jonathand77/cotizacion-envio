@@ -19,6 +19,7 @@ class ShippingQuoteOrchestratorTest {
 
     private static final ShippingQuoteRequest REQUEST = new ShippingQuoteRequest("REQ-1", "BOG", "MDE", 10.0);
 
+    // Regla de desempate nivel 1: entre dos cotizaciones validas, gana la de menor precio
     @Test
     void seleccionaLaCotizacionDeMenorPrecioCuandoAmbosProveedoresResponden() {
         var barata = new ProviderQuote("PROVIDER_A", "A-1", BigDecimal.valueOf(15000), 2);
@@ -36,6 +37,7 @@ class ShippingQuoteOrchestratorTest {
                 .verifyComplete();
     }
 
+    // Regla de desempate nivel 2: con precio empatado, gana el menor tiempo estimado de entrega
     @Test
     void antePrecioEmpatadoDesempataPorMenorTiempoEstimado() {
         var lenta = new ProviderQuote("PROVIDER_A", "A-1", BigDecimal.valueOf(15000), 4);
@@ -49,6 +51,7 @@ class ShippingQuoteOrchestratorTest {
                 .verifyComplete();
     }
 
+    // Regla de desempate nivel 3: con precio y dias empatados, gana el nombre alfabeticamente menor
     @Test
     void antePrecioYDiasEmpatadosDesempataPorNombreDeProveedor() {
         var b = new ProviderQuote("PROVIDER_B", "B-1", BigDecimal.valueOf(15000), 2);
@@ -62,6 +65,7 @@ class ShippingQuoteOrchestratorTest {
                 .verifyComplete();
     }
 
+    // Si un proveedor falla, la solicitud se completa igual con la cotizacion del otro
     @Test
     void toleraQueUnProveedorFalleYUsaElOtro() {
         var buena = new ProviderQuote("PROVIDER_B", "B-1", BigDecimal.valueOf(17000), 3);
@@ -82,6 +86,7 @@ class ShippingQuoteOrchestratorTest {
                 .verifyComplete();
     }
 
+    // Si ambos proveedores fallan, el resultado queda FAILED con selected = null
     @Test
     void marcaLaSolicitudComoFallidaCuandoAmbosProveedoresFallan() {
         var orchestrator = orchestratorWith(
@@ -97,6 +102,7 @@ class ShippingQuoteOrchestratorTest {
                 .verifyComplete();
     }
 
+    // Un proveedor que excede el timeout configurado se trata como fallo, sin bloquear la respuesta
     @Test
     void tratamosUnProveedorLentoComoFalloPorTimeout() {
         var orchestrator = new ShippingQuoteOrchestrator(
